@@ -62,4 +62,3 @@ typings/
 .env
 package-lock.json
 build
-database
