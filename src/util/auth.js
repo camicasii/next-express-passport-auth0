@@ -1,6 +1,6 @@
 import passport from 'passport';
 import passportLocal from 'passport-local';
-import { pool } from '../database/mysql/db_mysql';
+import User from '../database/mongodb/Schema';
 import helpers from "./bcryptHast";
 
 const LocalStrategy = passportLocal.Strategy;
@@ -11,15 +11,13 @@ new LocalStrategy({
       passwordField: "password",
       passReqToCallback: true
 },
-async ( req, username, password, done)=>{        
-  console.log(username, password);
-  
+async ( req, username, password, done)=>{          
     const isUser_ = await isUser(username)    
-    if(isUser_){        
-        const ID = isUser_[0].ID
+    if(isUser_){          
+        const ID = isUser_._id        
         const isPassword_ =await isPassword(password,ID)
         if (isPassword_){
-            const user = isUser_[0];
+            const user = isUser_;
             return done(null,user);    
         }
         else return done(null, false);
@@ -36,8 +34,7 @@ new LocalStrategy({
 },
 async ( req, username, password, done)=>{   
     
-    const isUser_ =await isUser(username)     
-    
+    const isUser_ =await isUser(username)   
     if(!isUser_){                
         const user = await createUser(username,password);
         if(user)
@@ -51,28 +48,23 @@ async ( req, username, password, done)=>{
 ));
 
 
-
-
-
-
 passport.serializeUser((user, done) => {
-    done(null, user.ID);
+  done(null, user._id);
   });
   
-  passport.deserializeUser(async (ID, done) => {
-    const [rows] = await pool.query("SELECT ID, username FROM `USERS` WHERE ID =?",[ID]);    
-//    console.log(user[0].ID);
-    return done(null, rows[0]);
+  passport.deserializeUser(async (id, done) => {
+    const rows = await User.findById(id)
+    return done(null, rows);
   });
 
   const isUser =async(username)=>{
-    const [rows] = await pool.query("SELECT ID, username FROM `USERS` WHERE username =?",[username]);
-    if(rows.length > 0) return [rows[0]];
+    const rows = await User.findOne({username})        
+    if(rows!= null) return rows;
     else return false;
   }
   const isPassword=async(password,ID)=>{      
-    const [rows] = await pool.query("SELECT PASSWORD FROM `USERS` WHERE ID =?",[ID]);
-    const passportSave =rows[0].PASSWORD     
+    const rows= await User.findById(ID);
+    const passportSave =rows.password
     const isPassword_ = await helpers.desEncrypt(password,passportSave)    
     return isPassword_
   }
@@ -82,17 +74,17 @@ passport.serializeUser((user, done) => {
     const encryptPassword  =await helpers.encrypt(password);
     const newUser ={
         username,
-        PASSWORD:encryptPassword
+        password:encryptPassword
     }        
-    const rows = await pool.query("INSERT INTO USERS SET ?",newUser)
-    .then(res=>{                
-            const  user={
-                    ID:res[0].insertId,
-                    username
-                };
-             return  user;
-    })
-    .catch(()=>false);
+    const  newUser_= new User(newUser)
+    
+    const rows =await newUser_.save().then(()=>true).catch(()=>false);
+
+    
+    
+    
+    
+    
     
     return rows;
   }

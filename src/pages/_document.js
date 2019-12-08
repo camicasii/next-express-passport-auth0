@@ -1,24 +1,30 @@
-import Document,{ Html,Head,Main,NextScript } from 'next/document';
+// _document is only rendered on the server side and not on the client side
+// Event handlers like onClick can't be added to this file
+
+// ./pages/_document.js
+import Document, { Html, Head, Main, NextScript } from 'next/document'
 
 class MyDocument extends Document {
-    static async getInitialProps(ctx) {
-      const initialProps = await Document.getInitialProps(ctx)
-      return { ...initialProps }
-    }
-  
-    render() {
-      return (
-        <Html>
-          <Head>
-            <link rel="icon" type="image/png" href="../static/logo.png" sizes="any"/>
-          </Head>
-          <body>
-            <Main />
-            <NextScript />
-          </body>
-        </Html>
-      )
-    }
+  static async getInitialProps(ctx) {
+    const initialProps = await Document.getInitialProps(ctx)
+    return { ...initialProps }
   }
-  
-  export default MyDocument
+
+  render() {
+    return (
+      <Html>
+        <Head >
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+        </Head>
+        <body>
+          <Main />
+          <NextScript />
+
+          <script src="/materialize.min.js"></script>
+        </body>
+      </Html>
+    )
+  }
+}
+
+export default MyDocument
